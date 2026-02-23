@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mãe Estudante - Cronograma Inteligente</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Nunito', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .glass-effect { background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(10px); }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+        .chat-message { animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .pulse-ring {
+            position: absolute;
+            border-radius: 50%;
+            animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.33); opacity: 0.8; }
+            80%, 100% { transform: scale(2); opacity: 0; }
+        }
+        .checkbox-wrapper input:checked + div {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: transparent;
+        }
+        .checkbox-wrapper input:checked + div svg {
+            display: block;
+        }
+        .tab-active { border-bottom: 3px solid #667eea; color: #667eea; }
+        .floating-btn {
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- App Container -->
+    <div class="max-w-md mx-auto bg-white min-h-screen shadow-2xl relative overflow-hidden">
+        
+        <!-- Header -->
+        <div class="gradient-bg text-white p-6 pb-12 rounded-b-[3rem] relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16"></div>
+            <div class="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-10 rounded-full -ml-12 -mb-12"></div>
+            
+            <div class="flex justify-between items-center mb-4 relative z-10">
+                <div>
+                    <h1 class="text-2xl font-bold">Olá, Mamãe! 💜</h1>
+                    <p class="text-purple-100 text-sm">Hoje é um ótimo dia para estudar</p>
+                </div>
+                <div class="relative">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=b6e3f4" class="w-12 h-12 rounded-full border-3 border-white shadow-lg">
+                    <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-white"></div>
+                </div>
+            </div>
+
+            <!-- Progress Card -->
+            <div class="glass-effect rounded-2xl p-4 mt-4">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-sm font-semibold">Progresso Semanal</span>
+                    <span class="text-2xl font-bold" id="progressPercent">0%</span>
+                </div>
+                <div class="w-full bg-purple-900 bg-opacity-30 rounded-full h-3">
+                    <div id="progressBar" class="bg-white rounded-full h-3 transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <div class="flex justify-between mt-2 text-xs text-purple-100">
+                    <span><i class="fas fa-book mr-1"></i><span id="completedTasks">0</span> concluídas</span>
+                    <span><i class="fas fa-clock mr-1"></i><span id="studyHours">0</span>h estudadas</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="flex justify-around bg-white border-b border-gray-100 sticky top-0 z-40">
+            <button onclick="switchTab('schedule')" id="tab-schedule" class="tab-active flex-1 py-4 text-sm font-bold text-gray-600 hover:text-purple-600 transition-colors flex flex-col items-center gap-1">
+                <i class="fas fa-calendar-alt text-lg"></i>
+                <span>Cronograma</span>
+            </button>
+            <button onclick="switchTab('ai')" id="tab-ai" class="flex-1 py-4 text-sm font-bold text-gray-600 hover:text-purple-600 transition-colors flex flex-col items-center gap-1 relative">
+                <div class="relative">
+                    <i class="fas fa-robot text-lg"></i>
+                    <span class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                </div>
+                <span>IA Saúde</span>
+            </button>
+            <button onclick="switchTab('goals')" id="tab-goals" class="flex-1 py-4 text-sm font-bold text-gray-600 hover:text-purple-600 transition-colors flex flex-col items-center gap-1">
+                <i class="fas fa-bullseye text-lg"></i>
+                <span>Metas</span>
+            </button>
+        </div>
+
+        <!-- Content Areas -->
+        <div class="p-4 pb-24 space-y-4">
+
+            <!-- Schedule Section -->
+            <div id="section-schedule" class="space-y-4">
+                <!-- Quick Stats -->
+                <div class="grid grid-cols-3 gap-3 mb-4">
+                    <div class="bg-purple-50 rounded-xl p-3 text-center">
+                        <i class="fas fa-baby text-purple-500 text-xl mb-1"></i>
+                        <p class="text-xs text-gray-600">Pausa</p>
+                        <p class="font-bold text-purple-700">15min</p>
+                    </div>
+                    <div class="bg-pink-50 rounded-xl p-3 text-center">
+                        <i class="fas fa-heart text-pink-500 text-xl mb-1"></i>
+                        <p class="text-xs text-gray-600">Bem-estar</p>
+                        <p class="font-bold text-pink-700">Ativo</p>
+                    </div>
+                    <div class="bg-blue-50 rounded-xl p-3 text-center">
+                        <i class="fas fa-moon text-blue-500 text-xl mb-1"></i>
+                        <p class="text-xs text-gray-600">Sono</p>
+                        <p class="font-bold text-blue-700">7h</p>
+                    </div>
+                </div>
+
+                <!-- Today's Schedule -->
+                <div class="flex justify-between items-center mb-2">
+                    <h2 class="text-lg font-bold text-gray-800">Hoje, <span id="currentDate"></span></h2>
+                    <button onclick="openAddTaskModal()" class="text-purple-600 hover:bg-purple-50 p-2 rounded-full transition-colors">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+
+                <div id="tasksList" class="space-y-3">
+                    <!-- Tasks will be inserted here -->
+                </div>
+
+                <!-- Study Tips -->
+                <div class="bg-gradient-to-r from-orange-100 to-pink-100 rounded-2xl p-4 mt-6 border border-orange-200">
+                    <div class="flex items-start gap-3">
+                        <div class="bg-white p-2 rounded-full shadow-sm">
+                            <i class="fas fa-lightbulb text-orange-500"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-800 text-sm mb-1">Dica do Dia</h3>
+                            <p class="text-xs text-gray-600 leading-relaxed">
+                                Estude enquanto o bebê dorme! Use a técnica Pomodoro de 25 minutos para manter o foco sem exaustão.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Health Section -->
+            <div id="section-ai" class="hidden space-y-4">
+                <div class="bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl p-6 text-white text-center relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-full opacity-20">
+                        <div class="absolute top-10 left-10 w-20 h-20 bg-white rounded-full blur-xl"></div>
+                        <div class="absolute bottom-10 right-10 w-32 h-32 bg-pink-300 rounded-full blur-xl"></div>
+                    </div>
+                    <div class="relative z-10">
+                        <div class="w-20 h-20 mx-auto bg-white rounded-full flex items-center justify-center mb-3 shadow-lg relative">
+                            <i class="fas fa-user-nurse text-3xl text-purple-600"></i>
+                            <div class="pulse-ring w-full h-full bg-purple-400"></div>
+                        </div>
+                        <h2 class="text-xl font-bold mb-1">Dra. Ana - IA Saúde</h2>
+                        <p class="text-purple-100 text-sm">Especialista em saúde da mulher e maternidade</p>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="sendQuickMessage('Como conciliar estudos com amamentação?')" class="bg-purple-50 hover:bg-purple-100 p-3 rounded-xl text-left transition-colors border border-purple-100">
+                        <i class="fas fa-baby-carriage text-purple-500 mb-1"></i>
+                        <p class="text-xs font-semibold text-gray-700">Amamentação + Estudos</p>
+                    </button>
+                    <button onclick="sendQuickMessage('Dicas para não ter dor nas costas estudando')" class="bg-pink-50 hover:bg-pink-100 p-3 rounded-xl text-left transition-colors border border-pink-100">
+                        <i class="fas fa-spa text-pink-500 mb-1"></i>
+                        <p class="text-xs font-semibold text-gray-700">Postura & Saúde</p>
+                    </button>
+                    <button onclick="sendQuickMessage('Como organizar tempo com bebê e marido')" class="bg-blue-50 hover:bg-blue-100 p-3 rounded-xl text-left transition-colors border border-blue-100">
+                        <i class="fas fa-clock text-blue-500 mb-1"></i>
+                        <p class="text-xs font-semibold text-gray-700">Gestão de Tempo</p>
+                    </button>
+                    <button onclick="sendQuickMessage('Alimentação saudável para mães estudantes')" class="bg-green-50 hover:bg-green-100 p-3 rounded-xl text-left transition-colors border border-green-100">
+                        <i class="fas fa-apple-alt text-green-500 mb-1"></i>
+                        <p class="text-xs font-semibold text-gray-700">Nutrição</p>
+                    </button>
+                </div>
+
+                <!-- Chat Area -->
+                <div class="bg-gray-50 rounded-2xl p-4 h-96 flex flex-col border border-gray-200">
+                    <div id="chatMessages" class="flex-1 overflow-y-auto space-y-3 mb-4 pr-2">
+                        <div class="flex gap-2 chat-message">
+                            <div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-robot text-purple-600 text-xs"></i>
+                            </div>
+                            <div class="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm max-w-[80%]">
+                                <p class="text-sm text-gray-700">Olá! Sou a Dra. Ana, sua assistente de saúde. Posso ajudar com dicas sobre saúde física e mental, organização e bem-estar durante seus estudos. Como posso ajudar você hoje? 💜</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-2">
+                        <input type="text" id="chatInput" placeholder="Digite sua dúvida sobre saúde..." 
+                               class="flex-1 px-4 py-3 rounded-full border border-gray-200 focus:outline-none focus:border-purple-500 text-sm"
+                               onkeypress="if(event.key==='Enter') sendMessage()">
+                        <button onclick="sendMessage()" class="bg-purple-600 hover:bg-purple-700 text-white w-12 h-12 rounded-full flex items-center justify-center transition-colors shadow-lg">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Goals Section -->
+            <div id="section-goals" class="hidden space-y-4">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-lg font-bold text-gray-800">Minhas Metas</h2>
+                    <button onclick="openAddGoalModal()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg transition-colors flex items-center gap-2">
+                        <i class="fas fa-plus"></i> Nova Meta
+                    </button>
+                </div>
+
+                <div id="goalsList" class="space-y-3">
+                    <!-- Goals will be inserted here -->
+                </div>
+
+                <!-- Motivation Card -->
+                <div class="bg-gradient-to-br from-yellow-100 to-orange-100 rounded-2xl p-5 border border-yellow-200 mt-6">
+                    <div class="flex items-center gap-3 mb-2">
+                        <i class="fas fa-star text-yellow-500 text-2xl"></i>
+                        <h3 class="font-bold text-gray-800">Você é capaz!</h3>
+                    </div>
+                    <p class="text-sm text-gray-600 italic">
+                        "Ser mãe não é um obstáculo para seus sonhos, é a motivação para conquistá-los."
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Floating Action Button -->
+        <button onclick="openAddTaskModal()" class="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full shadow-2xl flex items-center justify-center text-2xl floating-btn z-50 hover:scale-110 transition-transform">
+            <i class="fas fa-plus"></i>
+        </button>
+
+    </div>
+
+    <!-- Add Task Modal -->
+    <div id="addTaskModal" class="fixed inset-0 bg-black bg-opacity--opacity-50 hidden items-end z-50 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-md mx-auto rounded-t-3xl p-6 animate-slide-up">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-800">Nova Atividade</h3>
+                <button onclick="closeAddTaskModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form onsubmit="addTask(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Matéria/Atividade</label>
+                    <input type="text" id="taskTitle" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-500 focus:outline-none" placeholder="Ex: Biologia - Sistema Circulatório">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-600 mb-1">Horário</label>
+                        <input type="time" id="taskTime" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-600 mb-1">Duração</label>
+                        <select id="taskDuration" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-500 focus:outline-none">
+                            <option value="30">30 min</option>
+                            <option value="45">45 min</option>
+                            <option value="60" selected>1 hora</option>
+                            <option value="90">1h 30min</option>
+                            <option value="120">2 horas</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Categoria</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="category" value="health" class="hidden peer" checked>
+                            <div class="peer-checked:bg-purple-500 peer-checked:text-white bg-purple-50 text-purple-700 p-2 rounded-lg text-center text-sm font-medium transition-colors">
+                                <i class="fas fa-heartbeat mb-1 block"></i>Saúde
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="category" value="family" class="hidden peer">
+                            <div class="peer-checked:bg-pink-500 peer-checked:text-white bg-pink-50 text-pink-700 p-2 rounded-lg text-center text-sm font-medium transition-colors">
+                                <i class="fas fa-home mb-1 block"></i>Família
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="category" value="study" class="hidden peer">
+                            <div class="peer-checked:bg-blue-500 peer-checked:text-white bg-blue-50 text-blue-700 p-2 rounded-lg text-center text-sm font-medium transition-colors">
+                                <i class="fas fa-book mb-1 block"></i>Estudo
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 rounded-xl shadow-lg transition-colors mt-4">
+                    Adicionar ao Cronograma
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Goal Modal -->
+    <div id="addGoalModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-end z-50 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-md mx-auto rounded-t-3xl p-6 animate-slide-up">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-800">Nova Meta</h3>
+                <button onclick="closeAddGoalModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form onsubmit="addGoal(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Descrição da Meta</label>
+                    <input type="text" id="goalTitle" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-500 focus:outline-none" placeholder="Ex: Concluir módulo de Anatomia">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Prazo</label>
+                    <input type="date" id="goalDeadline" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-500 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Prioridade</label>
+                    <select id="goalPriority" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-500 focus:outline-none">
+                        <option value="high">Alta 🔴</option>
+                        <option value="medium" selected>Média 🟡</option>
+                        <option value="low">Baixa 🟢</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-4 rounded-xl shadow-lg transition-colors mt-4">
+                    Criar Meta
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <style>
+        .animate-slide-up { animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+
+    <script>
+        // Data Storage
+        let tasks = JSON.parse(localStorage.getItem('studyTasks')) || [
+            { id: 1, title: 'Anatomia - Sistema Cardiovascular', time: '09:00', duration: 60, category: 'health', completed: false },
+            { id: 2, title: 'Pausa para amamentação', time: '10:30', duration: 30, category: 'family', completed: false },
+            { id: 3, title: 'Farmacologia - Antibióticos', time: '14:00', duration: 90, category: 'health', completed: false },
+            { id: 4, title: 'Tempo com família', time: '18:00', duration: 120, category: 'family', completed: false }
+        ];
+
+        let goals = JSON.parse(localStorage.getItem('studyGoals')) || [
+            { id: 1, title: 'Finalizar curso de Fisiologia', deadline: '2024-03-15', priority: 'high', progress: 65 },
+            { id: 2, title: 'Ler 3 artigos científicos', deadline: '2024-03-10', priority: 'medium', progress: 30 }
+        ];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            updateDate();
+            renderTasks();
+            renderGoals();
+            updateProgress();
+        });
+
+        function updateDate() {
+            const options = { weekday: 'long', day: 'numeric', month: 'long' };
+            document.getElementById('currentDate').textContent = new Date().toLocaleDateString('pt-BR', options);
+        }
+
+        // Tab Switching
+        function switchTab(tab) {
+            // Hide all sections
+            document.getElementById('section-schedule').classList.add('hidden');
+            document.getElementById('section-ai').classList.add('hidden');
+            document.getElementById('section-goals').classList.add('hidden');
+            
+            // Remove active classes
+            document.getElementById('tab-schedule').classList.remove('tab-active');
+            document.getElementById('tab-ai').classList.remove('tab-active');
+            document.getElementById('tab-goals').classList.remove('tab-active');
+            
+            // Show selected section
+            document.getElementById(`section-${tab}`).classList.remove('hidden');
+            document.getElementById(`tab-${tab}`).classList.add('tab-active');
+        }
+
+        // Task Management
+        function renderTasks() {
+            const container = document.getElementById('tasksList');
+            container.innerHTML = '';
+            
+            tasks.sort((a, b) => a.time.localeCompare(b.time));
+            
+            tasks.forEach(task => {
+                const categoryColors = {
+                    health: 'bg-purple-100 text-purple-700 border-purple-200',
+                    family: 'bg-pink-100 text-pink-700 border-pink-200',
+                    study: 'bg-blue-100 text-blue-700 border-blue-200'
+                };
+                
+                const categoryIcons = {
+                    health: 'fa-heartbeat',
+                    family: 'fa-home',
+                    study: 'fa-book'
+                };
+
+                const div = document.createElement('div');
+                div.className = `bg-white rounded-2xl p-4 border-2 ${task.completed ? 'border-green-400 bg-green-50' : 'border-gray-100'} card-hover flex items-center gap-3`;
+                div.innerHTML = `
+                    <label class="checkbox-wrapper cursor-pointer relative">
+                        <input type="checkbox" class="hidden" ${task.completed ? 'checked' : ''} onchange="toggleTask(${task.id})">
+                        <div class="w-6 h-6 rounded-full border-2 border-gray-300 flex items-center justify-center transition-colors">
+                            <svg class="w-4 h-4 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                    </label>
+                    <div class="flex-1 ${task.completed ? 'opacity-50' : ''}">
+                        <h3 class="font-bold text-gray-800 ${task.completed ? 'line-through' : ''}">${task.title}</h3>
+                        <div class="flex items-center gap-2 mt-1">
+                            <span class="text-xs text-gray-500"><i class="far fa-clock mr-1"></i>${task.time} (${task.duration}min)</span>
+                            <span class="text-xs px-2 py-1 rounded-full ${categoryColors[task.category]}">
+                                <i class="fas ${categoryIcons[task.category]} mr-1"></i>${task.category === 'health' ? 'Saúde' : task.category === 'family' ? 'Família' : 'Estudo'}
+                            </span>
+                        </div>
+                    </div>
+                    <button onclick="deleteTask(${task.id})" class="text-gray-400 hover:text-red-500 transition-colors p-2">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function toggleTask(id) {
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                task.completed = !task.completed;
+                saveTasks();
+                renderTasks();
+                updateProgress();
+            }
+        }
+
+        function deleteTask(id) {
+            if (confirm('Deseja remover esta atividade?')) {
+                tasks = tasks.filter(t => t.id !== id);
+                saveTasks();
+                renderTasks();
+                updateProgress();
+            }
+        }
+
+        function addTask(e) {
+            e.preventDefault();
+            const newTask = {
+                id: Date.now(),
+                title: document.getElementById('taskTitle').value,
+                time: document.getElementById('taskTime').value,
+                duration: parseInt(document.getElementById('taskDuration').value),
+                category: document.querySelector('input[name="category"]:checked').value,
+                completed: false
+            };
+            tasks.push(newTask);
+            saveTasks();
+            renderTasks();
+            updateProgress();
+            closeAddTaskModal();
+            e.target.reset();
+        }
+
+        function saveTasks() {
+            localStorage.setItem('studyTasks', JSON.stringify(tasks));
+        }
+
+        // Goal Management
+        function renderGoals() {
+            const container = document.getElementById('goalsList');
+            container.innerHTML = '';
+            
+            goals.forEach(goal => {
+                const priorityColors = {
+                    high: 'bg-red-100 text-red-700 border-red-200',
+                    medium: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+                    low: 'bg-green-100 text-green-700 border-green-200'
+                };
+                
+                const div = document.createElement('div');
+                div.className = 'bg-white rounded-2xl p-4 border-2 border-gray-100 card-hover';
+                div.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex-1">
+                            <h3 class="font-bold text-gray-800">${goal.title}</h3>
+                            <p class="text-xs text-gray-500 mt-1"><i class="far fa-calendar-alt mr-1"></i>Prazo: ${new Date(goal.deadline).toLocaleDateString('pt-BR')}</p>
+                        </div>
+                        <span class="text-xs px-2 py-1 rounded-full ${priorityColors[goal.priority]} font-semibold">
+                            ${goal.priority === 'high' ? 'Alta' : goal.priority === 'medium' ? 'Média' : 'Baixa'}
+                        </span>
+                    </div>
+                    <div class="mt-3">
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-gray-600">Progresso</span>
+                            <span class="font-bold text-purple-600">${goal.progress}%</span>
+                        </div>
+                        <div class="w-full bg-gray-100 rounded-full h-2">
+                            <div class="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all" style="width: ${goal.progress}%"></div>
+                        </div>
+                        <input type="range" min="0" max="100" value="${goal.progress}" 
+                               onchange="updateGoalProgress(${goal.id}, this.value)"
+                               class="w-full mt-2 accent-purple-600 cursor-pointer">
+                    </div>
+                    <button onclick="deleteGoal(${goal.id})" class="mt-3 text-xs text-red-500 hover:text-red-700 font-semibold flex items-center gap-1">
+                        <i class="fas fa-trash-alt"></i> Remover Meta
+                    </button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function updateGoalProgress(id, value) {
+            const goal = goals.find(g => g.id === id);
+            if (goal) {
+                goal.progress = parseInt(value);
+                saveGoals();
+                renderGoals();
+            }
+        }
+
+        function deleteGoal(id) {
+            if (confirm('Deseja remover esta meta?')) {
+                goals = goals.filter(g => g.id !== id);
+                saveGoals();
+                renderGoals();
+            }
+        }
+
+        function addGoal(e) {
+            e.preventDefault();
+            const newGoal = {
+                id: Date.now(),
+                title: document.getElementById('goalTitle').value,
+                deadline: document.getElementById('goalDeadline').value,
+                priority: document.getElementById('goalPriority').value,
+                progress: 0
+            };
+            goals.push(newGoal);
+            saveGoals();
+            renderGoals();
+            closeAddGoalModal();
+            e.target.reset();
+        }
+
+        function saveGoals() {
+            localStorage.setItem('studyGoals', JSON.stringify(goals));
+        }
+
+        // Progress Update
+        function updateProgress() {
+            const total = tasks.length;
+            const completed = tasks.filter(t => t.completed).length;
+            const percent = total === 0 ? 0 : Math.round((completed / total) * 100);
+            const hours = tasks.filter(t => t.completed).reduce((acc, t) => acc + t.duration, 0) / 60;
+            
+            document.getElementById('progressPercent').textContent = percent + '%';
+            document.getElementById('progressBar').style.width = percent + '%';
+            document.getElementById('completedTasks').textContent = completed;
+            document.getElementById('studyHours').textContent = hours.toFixed(1);
+        }
+
+        // AI Chat
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            if (!message) return;
+            
+            addChatMessage(message, 'user');
+            input.value = '';
+            
+            // Simulate AI response
+            setTimeout(() => {
+                const response = generateHealthResponse(message);
+                addChatMessage(response, 'ai');
+            }, 1000);
+        }
+
+        function sendQuickMessage(message) {
+            addChatMessage(message, 'user');
+            setTimeout(() => {
+                const response = generateHealthResponse(message);
+                addChatMessage(response, 'ai');
+            }, 1000);
+        }
+
+        function addChatMessage(text, sender) {
+            const container = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.className = 'flex gap-2 chat-message ' + (sender === 'user' ? 'flex-row-reverse' : '');
+            
+            if (sender === 'ai') {
+                div.innerHTML = `
+                    <div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-robot text-purple-600 text-xs"></i>
+                    </div>
+                    <div class="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm max-w-[80%]">
+                        <p class="text-sm text-gray-700">${text}</p>
+                    </div>
+                `;
+            } else {
+                div.innerHTML = `
+                    <div class="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-user text-white text-xs"></i>
+                    </div>
+                    <div class="bg-purple-600 text-white p-3 rounded-2xl rounded-tr-none shadow-sm max-w-[80%]">
+                        <p class="text-sm">${text}</p>
+                    </div>
+                `;
+            }
+            
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function generateHealthResponse(input) {
+            const responses = {
+                'amamentação': 'Amamentar e estudar é possível! 💜\n\n1. **Organização**: Estude próximo ao bebê para não perder o ritmo das mamadas\n2. **Posição**: Use uma almofada de amamentação enquanto lê conteúdos teóricos\n3. **Áudio**: Grave resumos e ouça enquanto amamenta\n4. **Pausas**: Aproveite o sono do bebê para focar em exercícios práticos\n\nLembre-se: hidratação é fundamental para a produção de leite e concentração!',
+                'costas': 'Dor nas costas é comum entre mães e estudantes! 🧘‍♀️\n\n**Prevenção:**\n- Mantenha a tela na altura dos olhos\n- Use apoio lombar (almofada na cadeira)\n- Faça pausas a cada 25 minutos para alongar\n- Alterne entre estudar sentada e em pé\n\n**Exercício rápido**: Gire os ombros para trás 10 vezes a cada hora. Isso alivia a tensão!',
+                'tempo': 'Conciliar família e estudos requer estratégia! ⏰\n\n**Dicas práticas:**\n1. **Comunicação**: Explique ao marido seus horários de estudo para ele assumir mais tarefas nesses momentos\n2. **Rotina**: Estabeleça horários fixos (ex: quando o bebê dorme à tarde)\n3. **Qualidade > Quantidade**: 1 hora focada vale mais que 3 distraídas\n4. **Domingos**: Use para planejar a semana toda\n\nVocê está fazendo um investimento no futuro da sua família!',
+                'alimentação': 'Nutrição para mães estudantes é crucial! 🥗\n\n**Alimentos cerebrais:**\n- Omega-3 (peixes, nozes) - memória\n- Antioxidantes (mirtilo, cacau) - concentração\n- Ferro (folhas verdes) - oxigenação do cérebro\n- Hidratação: 2L de água/dia\n\n**Dica prática**: Prepare marmitas no fim de semana. Assim você não perde tempo cozinhando nos dias de prova!',
+                'sono': 'Sono e aprendizado andam juntos! 😴\n\n**Para mães:**\n- Durma quando o bebê dormir (mesmo que seja 20min)\n- Evite café após 16h\n- Crie um ritual de desligamento (tela azul bloqueada à noite)\n- Power nap de 15min entre estudos revitaliza\n\n**Fato**: Durante o sono o cérebro consolida a memória. Priorize descansar após revisões intensas!'
+            };
+            
+            // Check for keywords
+            for (let key in responses) {
+                if (input.toLowerCase().includes(key)) {
+                    return responses[key];
+                }
+            }
+            
+            return `Entendi sua dúvida sobre "${input}". 💜\n\nComo mãe e estudante, seu bem-estar é prioridade! Aqui estão dicas gerais:\n\n1. **Escute seu corpo**: Fadiga excessiva diminui a retenção de conteúdo\n2. **Micro-pausas**: A cada 25min, levante-se, beba água e olhe longe\n3. **Rede de apoio**: Peça ajuda quando precisar - não é fraqueza!\n4. **Celebre pequenas vitórias**: Cada capítulo lido é uma conquista\n\nPosso ajudar com algo mais específico sobre saúde física, mental ou organização?`;
+        }
+
+        // Modal Controls
+        function openAddTaskModal() {
+            document.getElementById('addTaskModal').classList.remove('hidden');
+            document.getElementById('addTaskModal').classList.add('flex');
+        }
+
+        function closeAddTaskModal() {
+            document.getElementById('addTaskModal').classList.add('hidden');
+            document.getElementById('addTaskModal').classList.remove('flex');
+        }
+
+        function openAddGoalModal() {
+            document.getElementById('addGoalModal').classList.remove('hidden');
+            document.getElementById('addGoalModal').classList.add('flex');
+        }
+
+        function closeAddGoalModal() {
+            document.getElementById('addGoalModal').classList.add('hidden');
+            document.getElementById('addGoalModal').classList.remove('flex');
+        }
+
+        // Close modals on outside click
+        window.onclick = function(event) {
+            if (event.target.classList.contains('fixed')) {
+                event.target.classList.add('hidden');
+                event.target.classList.remove('flex');
+            }
+        }
+    </script>
+</body>
+</html>
